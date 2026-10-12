@@ -1,0 +1,31 @@
+[project]
+name = "pulseops-hub"
+version = "1.0.0"
+description = "Full-stack Order & Inventory Management Service with Comprehensive API and Playwright E2E Automation"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "bcrypt>=5.0.0",
+    "email-validator>=2.3.0",
+    "faker>=40.43.0",
+    "fastapi>=0.143.0",
+    "httpx>=0.28.1",
+    "playwright>=1.63.0",
+    "pydantic>=2.14.1",
+    "pyjwt>=2.15.1",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pytest-playwright>=0.10.0",
+    "pytest-xdist>=3.8.0",
+    "python-multipart>=0.0.32",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[tool.uv]
+package = false
+
+
+
+[build-system]
+requires = ["uv_build>=0.12.22,<0.13.0"]
+build-backend = "uv_build"

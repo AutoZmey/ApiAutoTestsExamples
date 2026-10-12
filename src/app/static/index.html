@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PulseOps Hub — Order & Inventory Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Header Navigation -->
+  <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20">
+          P
+        </div>
+        <div>
+          <span class="text-lg font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">PulseOps Hub</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-400 border border-indigo-800 ml-1.5 hidden sm:inline font-mono">v1.0</span>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs (when logged in) -->
+      <nav id="main-nav" class="hidden md:flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
+        <button id="nav-btn-catalog" data-testid="nav-catalog" class="nav-tab active px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all text-white bg-indigo-600">Catalog</button>
+        <button id="nav-btn-orders" data-testid="nav-orders" class="nav-tab px-3.5 py-1.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-all">Orders</button>
+        <button id="nav-btn-analytics" data-testid="nav-analytics" class="nav-tab px-3.5 py-1.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-all">Analytics</button>
+      </nav>
+
+      <!-- User & Cart Controls -->
+      <div class="flex items-center gap-3">
+        <!-- Add Product Button (Admin only) -->
+        <button id="btn-open-new-product" data-testid="nav-new-product" class="hidden px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold shadow-md transition-all">
+          + Add Product
+        </button>
+
+        <!-- Cart Button -->
+        <button id="cart-toggle-btn" data-testid="cart-toggle-btn" class="relative p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all border border-slate-700 flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          </svg>
+          <span id="cart-badge-count" data-testid="cart-badge-count" class="absolute -top-1.5 -right-1.5 bg-indigo-500 text-white text-[11px] font-bold rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center border-2 border-slate-900 shadow">0</span>
+        </button>
+
+        <!-- User Profile Info -->
+        <div id="user-section" class="hidden items-center gap-2">
+          <div class="text-right hidden sm:block">
+            <div id="user-display-name" data-testid="user-profile-badge" class="text-xs font-medium text-slate-200">User</div>
+            <div id="user-display-role" class="text-[10px] text-slate-400 font-mono uppercase">Role</div>
+          </div>
+          <button id="btn-logout" data-testid="btn-logout" class="p-2 rounded-xl bg-slate-800/80 hover:bg-rose-950/40 hover:text-rose-400 text-slate-400 border border-slate-700/60 transition-all text-xs font-medium">
+            Logout
+          </button>
+        </div>
+
+        <!-- Login Trigger (when logged out) -->
+        <button id="btn-open-auth-modal" data-testid="btn-open-auth" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition-all shadow-md">
+          Sign In
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Body -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+
+    <!-- View: Catalog -->
+    <section id="view-catalog" class="space-y-6">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-slate-950/40 p-4 rounded-2xl border border-slate-800">
+        <div class="relative flex-1">
+          <input id="search-input" data-testid="input-search" type="text" placeholder="Search catalog by title, SKU, or keyword..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+        </div>
+        <div class="flex items-center gap-2">
+          <select id="category-filter" data-testid="select-category" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+            <option value="">All Categories</option>
+            <option value="Hardware">Hardware</option>
+            <option value="Audio">Audio</option>
+            <option value="Accessories">Accessories</option>
+            <option value="Office">Office</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Products Grid -->
+      <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <!-- Rendered via JS -->
+      </div>
+    </section>
+
+    <!-- View: Orders -->
+    <section id="view-orders" class="space-y-6 hidden">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-bold text-white tracking-tight">Order Fulfillment</h2>
+          <p class="text-xs text-slate-400">Track and manage customer shipments & order life-cycles</p>
+        </div>
+        <button id="btn-refresh-orders" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700">Refresh</button>
+      </div>
+
+      <div class="bg-slate-950/50 rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+          <table data-testid="orders-table" class="w-full text-left text-sm text-slate-300">
+            <thead class="text-xs uppercase bg-slate-900/80 text-slate-400 border-b border-slate-800">
+              <tr>
+                <th class="px-5 py-3">Order #</th>
+                <th class="px-5 py-3">Customer</th>
+                <th class="px-5 py-3">Items</th>
+                <th class="px-5 py-3">Total</th>
+                <th class="px-5 py-3">Status</th>
+                <th class="px-5 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="orders-table-body" class="divide-y divide-slate-800/80">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- View: Analytics -->
+    <section id="view-analytics" class="space-y-6 hidden">
+      <div>
+        <h2 class="text-xl font-bold text-white tracking-tight">Operations Analytics</h2>
+        <p class="text-xs text-slate-400">Key metrics for store orders, inventory health, and sales volume</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800 shadow-md">
+          <div class="text-xs text-slate-400 uppercase font-semibold">Total Orders</div>
+          <div id="metric-total-orders" data-testid="metric-total-orders" class="text-2xl font-bold text-white mt-1">0</div>
+        </div>
+        <div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800 shadow-md">
+          <div class="text-xs text-slate-400 uppercase font-semibold">Total Revenue</div>
+          <div id="metric-total-revenue" data-testid="metric-total-revenue" class="text-2xl font-bold text-emerald-400 mt-1">$0.00</div>
+        </div>
+        <div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800 shadow-md">
+          <div class="text-xs text-slate-400 uppercase font-semibold">Pending Fulfillment</div>
+          <div id="metric-pending-orders" data-testid="metric-pending-orders" class="text-2xl font-bold text-amber-400 mt-1">0</div>
+        </div>
+        <div class="bg-slate-950/60 p-5 rounded-2xl border border-slate-800 shadow-md">
+          <div class="text-xs text-slate-400 uppercase font-semibold">Low Stock Items</div>
+          <div id="metric-low-stock" data-testid="metric-low-stock" class="text-2xl font-bold text-rose-400 mt-1">0</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Auth Modal -->
+  <div id="auth-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+      <button id="btn-close-auth-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white">✕</button>
+
+      <div class="flex border-b border-slate-800 mb-6">
+        <button id="tab-btn-login" data-testid="tab-login" class="flex-1 pb-3 text-sm font-semibold border-b-2 border-indigo-500 text-indigo-400">Sign In</button>
+        <button id="tab-btn-register" data-testid="tab-register" class="flex-1 pb-3 text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-white">Register</button>
+      </div>
+
+      <div id="auth-error-msg" data-testid="auth-error-msg" class="hidden mb-4 p-3 rounded-xl bg-rose-950/60 border border-rose-800 text-rose-300 text-xs"></div>
+
+      <!-- Login Form -->
+      <form id="form-login" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Email</label>
+          <input id="login-email" data-testid="input-login-email" type="email" required placeholder="user@example.com" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Password</label>
+          <input id="login-password" data-testid="input-login-password" type="password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <button type="submit" data-testid="btn-login-submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-semibold transition-all shadow-md">
+          Sign In
+        </button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="form-register" class="space-y-4 hidden">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Full Name</label>
+          <input id="register-name" data-testid="input-register-name" type="text" required placeholder="Jane Doe" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Email</label>
+          <input id="register-email" data-testid="input-register-email" type="email" required placeholder="jane@example.com" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Password</label>
+          <input id="register-password" data-testid="input-register-password" type="password" required minlength="6" placeholder="At least 6 characters" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <button type="submit" data-testid="btn-register-submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-semibold transition-all shadow-md">
+          Create Account
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Cart Drawer -->
+  <div id="cart-drawer" data-testid="cart-drawer" class="fixed inset-y-0 right-0 w-full max-w-md bg-slate-900 border-l border-slate-800 z-50 shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300 ease-in-out">
+    <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+        </svg>
+        <h3 class="font-bold text-white text-base">Your Cart</h3>
+      </div>
+      <button id="btn-close-cart" data-testid="btn-close-cart" class="text-slate-400 hover:text-white p-1 rounded-lg">✕</button>
+    </div>
+
+    <div id="cart-items-list" class="flex-1 overflow-y-auto p-4 space-y-3">
+      <!-- Cart items injected via JS -->
+    </div>
+
+    <div class="p-4 border-t border-slate-800 bg-slate-950/80 space-y-3">
+      <div class="space-y-1.5 text-xs text-slate-300">
+        <div class="flex justify-between">
+          <span class="text-slate-400">Subtotal:</span>
+          <span id="cart-subtotal">$0.00</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-400">Tax (10%):</span>
+          <span id="cart-tax">$0.00</span>
+        </div>
+        <div class="flex justify-between text-sm font-bold text-white border-t border-slate-800 pt-1.5">
+          <span>Total:</span>
+          <span id="cart-total" data-testid="cart-total-price">$0.00</span>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-slate-300 mb-1">Shipping Address</label>
+        <input id="input-shipping-address" data-testid="input-shipping-address" type="text" placeholder="123 Tech Boulevard, Suite 400" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+      </div>
+
+      <button id="btn-place-order" data-testid="btn-place-order" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+        Place Order
+      </button>
+    </div>
+  </div>
+
+  <!-- Create Product Modal (Admin) -->
+  <div id="new-product-modal" data-testid="modal-new-product" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative">
+      <button id="btn-close-new-product-modal" class="absolute top-4 right-4 text-slate-400 hover:text-white">✕</button>
+      <h3 class="text-lg font-bold text-white mb-4">Add Catalog Item</h3>
+
+      <form id="form-create-product" class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Product Title</label>
+          <input id="prod-title" data-testid="input-product-title" type="text" required placeholder="e.g. Ergonomic Office Chair" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">SKU</label>
+            <input id="prod-sku" data-testid="input-product-sku" type="text" required placeholder="CH-ERG-01" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Category</label>
+            <input id="prod-category" data-testid="input-product-category" type="text" required placeholder="Furniture" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Price ($)</label>
+            <input id="prod-price" data-testid="input-product-price" type="number" step="0.01" min="0.01" required placeholder="249.99" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Stock</label>
+            <input id="prod-stock" data-testid="input-product-stock" type="number" min="0" required placeholder="25" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-300 mb-1">Description</label>
+          <textarea id="prod-desc" rows="2" placeholder="Brief technical specifications..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"></textarea>
+        </div>
+        <button type="submit" data-testid="btn-submit-product" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-semibold transition-all shadow-md">
+          Save Product
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <footer class="border-t border-slate-800/80 bg-slate-950/60 py-4 text-center text-xs text-slate-500">
+    PulseOps Order & Inventory Hub &bull; Portfolio Test Automation Showcase
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
