@@ -5,6 +5,7 @@
 [![pytest](https://img.shields.io/badge/pytest-9.1+-0A9EDC?logo=pytest&logoColor=white)](https://docs.pytest.org/)
 [![Playwright](https://img.shields.io/badge/Playwright-1.63+-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev/python/)
 [![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?logo=github-actions&logoColor=white)](.github/workflows/tests.yml)
+[![Tests](https://img.shields.io/badge/Tests-40%20Passed-brightgreen)](https://github.com/AutoZmey/ApiAutoTestsExamples)
 [![Architecture](https://img.shields.io/badge/Design-Page_Object_Model-8A2BE2)](#test-framework-architecture)
 
 > A modern Order Fulfillment & Inventory Management platform paired with an enterprise-grade automated testing suite (REST API & Playwright E2E with Page Object Model) built in Python.
